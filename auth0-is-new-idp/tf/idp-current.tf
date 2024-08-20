@@ -55,6 +55,9 @@ data "okta_policy" "idp_discovery_policy" {
 output "okta-auth0-idp-id" {
   value = okta_idp_saml.auth0.id
 }
+
+/*
+// NOTE: do NOT remove
 resource "okta_policy_rule_idp_discovery" "auth0-saml-idp-routing" {
   policy_id                  = data.okta_policy.idp_discovery_policy.id
   name                      = "Send all traffic to IdP ${var.auth0_idp_domain}"
@@ -69,7 +72,7 @@ resource "okta_policy_rule_idp_discovery" "auth0-saml-idp-routing" {
     type = "APP"
   }
 }
-
+*/
 
 
 data "keycloak_realm" "master" {

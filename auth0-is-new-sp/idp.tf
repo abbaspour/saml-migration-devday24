@@ -85,39 +85,10 @@ resource "auth0_user" "user1" {
   given_name      = "Amin"
   family_name     = "Abbaspour"
 }
-/*
-
-
-# Solution i2: Mimic current IdP by Upload signing key from current IdP to Auth0
-resource "auth0_client" "mimic-kc-idp" {
-  provider = auth0.idp
-
-  name = "Mimic KeyCload SAML IdP on ${var.kc_url}"
-
-  callbacks = [
-    "https://${var.auth0_sp_domain}/login/callback"  #cycle dependency
-  ]
-
-  addons {
-    samlp {
-      issuer              = "http://localhost:8080/realms/master"
-      signature_algorithm = "rsa-sha256"
-      name_identifier_probes = ["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"]
-      mappings = {
-        "given_name" : "firstName", "family_name" : "lastName", "email" : "email"
-      }
-    }
-  }
-}
-*/
 
 locals {
    signingCert = replace(data.local_file.cert_pem_file.content, "\n", "\\n")
    signingKey = replace(data.local_file.key_pem_file.content, "\n", "\\n")
-}
-
-output "signingCert" {
-  value = local.signingCert
 }
 
 resource "auth0_action" "kc-saml-change-singing-key" {

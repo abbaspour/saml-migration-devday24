@@ -1,6 +1,77 @@
-/*
+# simple SPA client
+resource "auth0_client" "jwt-io" {
+  provider = auth0.sp
+
+  name            = "JWT.io 2"
+  description     = "JWT.io SPA client 2"
+  app_type        = "spa"
+  oidc_conformant = true
+  is_first_party  = true
+
+  callbacks = [
+    "https://jwt.io"
+  ]
+
+  allowed_logout_urls = [
+  ]
+
+  grant_types = [
+    "implicit",
+  ]
+
+  jwt_configuration {
+    alg = "RS256"
+  }
+}
+
+output "auth0_jwt_io_client_id" {
+  value = auth0_client.jwt-io.client_id
+}
+locals {
+  saml_connection_name    = "Okta-SAML-2"
+}
+
+# Solution S1: turn your current SP into IdP
+resource "auth0_connection" "okta-saml" {
+  provider = auth0.sp
+
+  name           = local.saml_connection_name
+  strategy       = "samlp"
+  display_name   = "Okta SAML Connection 2 to ${var.okta_org_name}"
+  show_as_button = true
+
+  options {
+    debug                    = false
+    signature_algorithm      = "rsa-sha256"
+    digest_algorithm         = "sha256"
+    /*
+    sign_in_endpoint = okta_app_saml.saml-app-current.http_post_binding
+    issuer = okta_app_saml.saml-app-current.entity_url
+    protocol_binding = "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+    */
+    metadata_xml = file("okta-idp-2-metadata.xml")
+    set_user_root_attributes = "on_each_login"
+
+    idp_initiated {
+      client_id              = auth0_client.jwt-io.client_id
+      client_protocol        = "oidc"
+      client_authorize_query = "type=id_token&timeout=30"
+    }
+  }
+}
+
+resource "auth0_connection_clients" "Okta-SAML-app-assignment" {
+  provider = auth0.sp
+
+  connection_id = auth0_connection.okta-saml.id
+  enabled_clients = [
+    auth0_client.jwt-io.client_id,
+    var.auth0_sp_tf_client_id
+  ]
+}
+
 resource "okta_app_saml" "saml-app-current" {
-  label                    = "SAML App for ${var.auth0_sp_tenant_name}"
+  label                    = "SAML App 2 for ${var.auth0_sp_tenant_name}"
   sso_url                  = "https://${var.auth0_sp_domain}/login/callback"
   recipient                = "https://${var.auth0_sp_domain}/login/callback"
   destination              = "https://${var.auth0_sp_domain}/login/callback"
@@ -15,38 +86,6 @@ resource "okta_app_saml" "saml-app-current" {
   implicit_assignment        = true
 }
 
-output "okta-metadata-url" {
-  value = okta_app_saml.saml-app-current.metadata_url
-}
-
-# Solution i1: Current IdP is going to act like a SP
-data "http" "auth0-jwks" {
-  url = "https://${var.auth0_idp_domain}/.well-known/jwks.json"
-}
-
-data "jq_query" "extract-first-x5c-from-jwks" {
-  data  = data.http.auth0-jwks.response_body
-  query = ".keys[0].x5c[0]"
-}
-
-
-resource "okta_idp_saml_key" "auth0-signing-key" {
-  x5c = [data.jq_query.extract-first-x5c-from-jwks.result]
-}
-
-resource "okta_idp_saml" "auth0" {
-  name                     = "IdP ${var.auth0_idp_domain}"
-  acs_type                 = "INSTANCE"
-  sso_url                  = "https://${var.auth0_idp_domain}/samlp/${auth0_client.idp.client_id}"
-  sso_destination          = "https://${var.auth0_idp_domain}"
-  sso_binding              = "HTTP-POST"
-  username_template        = "idpuser.subjectNameId"
-  kid                      = okta_idp_saml_key.auth0-signing-key.kid
-  issuer                   = "urn:${var.auth0_idp_domain}"
-  request_signature_scope  = "REQUEST"
-  response_signature_scope = "ANY"
-}
-
 // All Okta org(s) contain only one IdP Discovery Policy
 data "okta_policy" "idp_discovery_policy" {
   name = "Idp Discovery Policy"
@@ -56,9 +95,10 @@ data "okta_policy" "idp_discovery_policy" {
 output "okta-auth0-idp-id" {
   value = okta_idp_saml.auth0.id
 }
+
 resource "okta_policy_rule_idp_discovery" "auth0-saml-idp-routing" {
   policy_id                  = data.okta_policy.idp_discovery_policy.id
-  name                      = "Send all traffic to IdP ${var.auth0_idp_domain}"
+  name                      = "Send all to IdP 2 ${var.auth0_idp_domain}"
   idp_id                    = okta_idp_saml.auth0.id
   idp_type                  = "Saml2"
   network_connection        = "ANYWHERE"
@@ -71,25 +111,3 @@ resource "okta_policy_rule_idp_discovery" "auth0-saml-idp-routing" {
   }
 }
 
-
-
-data "keycloak_realm" "master" {
-  realm = "master"
-}
-
-resource "keycloak_saml_client" "auth0_saml_client" {
-  realm_id  = data.keycloak_realm.master.id
-  client_id = "urn:auth0:${var.auth0_sp_tenant_name}:${local.kc_saml_connection_name}"
-  name      = "auth0-saml-client"
-
-  valid_redirect_uris = [
-    "https://${var.auth0_sp_domain}/login/callback"
-  ]
-
-  sign_documents          = false
-  sign_assertions         = true
-  include_authn_statement = true
-
-  client_signature_required = false
-}
-*/

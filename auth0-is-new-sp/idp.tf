@@ -7,17 +7,36 @@ resource "auth0_tenant" "IdP" {
   }
 }
 
-# Solution i1: Turn the current IdP into an SP Proxy
+data "local_file" "cert_pem_file" {
+  filename = "../ca/auth0-is-new-sp-cert.pem"
+}
+
+data "local_file" "key_pem_file" {
+  filename = "../ca/auth0-is-new-sp-private.pem"
+}
+
+resource "null_resource" "cert_strip_pem" {
+  provisioner "local-exec" {
+    command = <<EOT
+      cat ${data.local_file.cert_pem_file.filename} | \
+      awk 'NR>1 && !/^-----END/ {printf "%s", $0}' > /tmp/auth0-is-new-sp-cert.x5c
+    EOT
+  }
+}
+
+data "local_file" "cert_x5c" {
+  depends_on = [null_resource.cert_strip_pem]
+  filename = "/tmp/auth0-is-new-sp-cert.x5c"
+}
+
 
 resource "auth0_client" "idp" {
   provider = auth0.idp
 
-  name = "SAML IdP 1 for ${var.okta_org_name}.${var.okta_base_url}"
+  name = "SAML IdP 2 for ${var.okta_org_name}.${var.okta_base_url}"
 
   callbacks = [
-    #"https://${var.okta_org_name}.${var.okta_base_url}/sso/saml2/${okta_idp_saml.auth0.id}"  #cycle dependency
-    "https://${var.okta_org_name}.${var.okta_base_url}/sso/saml2/0oagmbrczkO0aroZM1d7"  #cycle dependency
-    //"https://${var.auth0_sp_domain}/login/callback"
+    "https://${var.okta_org_name}.${var.okta_base_url}/sso/saml2/0oagomz7l7LjsZ8Jp1d7"  #cycle dependency
   ]
 
   addons {
@@ -32,35 +51,41 @@ resource "auth0_client" "idp" {
 }
 
 locals {
-  default-db-name = "Username-Password-Authentication"
+  db-name = "auth0-is-new-sp-users"
 }
 
-data "auth0_connection" "default-db" {
+resource "auth0_connection" "db" {
   provider = auth0.idp
-  name     = local.default-db-name
+  name     = local.db-name
+  strategy = "auth0"
+  options {
+    password_complexity_options {
+      min_length = 8
+    }
+    password_policy = "low"
+  }
 }
 
 resource "auth0_connection_clients" "enable-idp-app-for-default-db" {
   provider = auth0.idp
 
-  connection_id = data.auth0_connection.default-db.id
+  connection_id = auth0_connection.db.id
 
   enabled_clients = [
     var.auth0_idp_tf_client_id,
     auth0_client.idp.client_id,
-    auth0_client.mimic-kc-idp.client_id
   ]
 }
-
 resource "auth0_user" "user1" {
   provider = auth0.idp
 
-  connection_name = local.default-db-name
+  connection_name = local.db-name
   email           = "amin@atko.email"
   password        = "amin@atko.email"
   given_name      = "Amin"
   family_name     = "Abbaspour"
 }
+/*
 
 
 # Solution i2: Mimic current IdP by Upload signing key from current IdP to Auth0
@@ -84,16 +109,21 @@ resource "auth0_client" "mimic-kc-idp" {
     }
   }
 }
+*/
 
 locals {
-   signingCert = replace(file("kc-idp-cert.pem"), "\n", "\\n")
-   signingKey = replace(file("kc-idp-key.pem"), "\n", "\\n")
+   signingCert = replace(data.local_file.cert_pem_file.content, "\n", "\\n")
+   signingKey = replace(data.local_file.key_pem_file.content, "\n", "\\n")
+}
+
+output "signingCert" {
+  value = local.signingCert
 }
 
 resource "auth0_action" "kc-saml-change-singing-key" {
   provider = auth0.idp
 
-  name = "kc-saml-change-singing-key"
+  name = "okta-saml-change-singing-key"
   runtime = "node18"
   deploy  = true
 
@@ -105,7 +135,7 @@ resource "auth0_action" "kc-saml-change-singing-key" {
 
   code = templatefile("saml-response-change-signing.js",
     {
-      samlIdpClientId = auth0_client.mimic-kc-idp.client_id
+      samlIdpClientId = auth0_client.idp.client_id
       signingCert = local.signingCert
       signingKey = local.signingKey
     })

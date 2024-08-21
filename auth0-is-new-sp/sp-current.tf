@@ -36,7 +36,7 @@ resource "okta_app_oauth" "jwt_io" {
   grant_types = ["password", "implicit", "authorization_code"]
   response_types = ["id_token", "code"]
   token_endpoint_auth_method = "client_secret_basic"
-  redirect_uris              = ["https://jwt.io"]
+  redirect_uris = ["https://jwt.io"]
   pkce_required              = false
   implicit_assignment        = true
 
@@ -51,3 +51,53 @@ resource "okta_app_oauth" "jwt_io" {
 output "okta_jwt_io_client_id" {
   value = okta_app_oauth.jwt_io.client_id
 }
+
+
+data "keycloak_realm" "master" {
+  realm = var.kc_realm
+}
+
+resource "keycloak_saml_identity_provider" "auth0" {
+  realm = data.keycloak_realm.master.id
+
+  alias                      = "IdP-${var.auth0_idp_domain}"
+  entity_id                  = "urn:${var.auth0_idp_domain}"
+  single_sign_on_service_url = "https://${var.auth0_idp_domain}/samlp/${auth0_client.idp-for-kc.client_id}"
+  sync_mode                  = "IMPORT"
+}
+
+resource "keycloak_saml_identity_provider" "okta" {
+  realm = data.keycloak_realm.master.id
+
+  //alias                      = "IdP-${var.okta_org_name}.${var.okta_base_url}"
+  alias                      = "okta"
+  entity_id                  = "http://localhost:8080/realms/master/broker/okta/endpoint"
+
+  single_sign_on_service_url = okta_app_saml.saml-app-kc.http_post_binding
+  single_logout_service_url = okta_app_saml.saml-app-kc.http_post_binding
+  //name_id_policy_format     = "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
+
+  post_binding_logout = true
+  post_binding_authn_request = true
+  name_id_policy_format         = "Unspecified"
+  principal_type                = "SUBJECT"
+
+  signing_certificate = file("okta-idp-cert.pem")
+
+  sync_mode                  = "IMPORT"
+  post_binding_response = true
+}
+
+resource "keycloak_openid_client" "jwt_io" {
+  realm_id = data.keycloak_realm.master.id
+
+  client_id   = "jwt.io"
+  access_type = "PUBLIC"
+  implicit_flow_enabled = true
+
+  valid_redirect_uris = [
+    "https://jwt.io"
+  ]
+
+}
+

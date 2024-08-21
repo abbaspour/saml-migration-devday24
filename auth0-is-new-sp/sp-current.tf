@@ -75,7 +75,8 @@ resource "keycloak_saml_identity_provider" "okta" {
 
   # TODO: not sure how to set idp entity_id here. it should be set to http://www.okta.com/${org_id}
   single_sign_on_service_url = okta_app_saml.saml-app-kc.http_post_binding
-  single_logout_service_url = okta_app_saml.saml-app-kc.http_post_binding
+  # TODO: not sure how to get SLO url from okta
+  single_logout_service_url = "https://${var.okta_org_name}.${var.okta_base_url}/app/amin_samlappforkchttplocalhost8080_1/exkgoprv4hepMIE8Q1d7/slo/saml"
 
   login_hint                    = true
   post_binding_logout           = true
@@ -88,6 +89,8 @@ resource "keycloak_saml_identity_provider" "okta" {
 
   sync_mode             = "IMPORT"
   post_binding_response = true
+
+  signature_algorithm = "RSA_SHA256"
 }
 
 resource "keycloak_openid_client" "jwt_io" {

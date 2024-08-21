@@ -188,6 +188,9 @@ resource "okta_app_saml" "saml-app-kc" {
   authn_context_class_ref  = "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
   implicit_assignment = true
 
+  saml_signed_request_enabled = true
+  single_logout_certificate = file("../auth0-is-new-idp/tf/kc-idp-cert.x5c")
+
   //key_name = file("../auth0-is-new-idp/tf/kc-cert.x5c")
   authentication_policy = okta_app_signon_policy.only_1fa.id
 }

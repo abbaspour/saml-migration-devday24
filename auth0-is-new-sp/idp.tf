@@ -167,7 +167,9 @@ resource "okta_app_signon_policy_rule" "only_1fa_rule" {
 
 locals {
   kc_okta_broker_alias = "IdP-${var.okta_org_name}.${var.okta_base_url}"
+  kc_okta_unsigned_broker_alias = "IdP-unsigned-${var.okta_org_name}.${var.okta_base_url}"
 }
+
 
 resource "okta_app_saml" "saml-app-kc" {
   label = "SAML App for KC ${var.kc_url}"
@@ -186,21 +188,50 @@ resource "okta_app_saml" "saml-app-kc" {
   digest_algorithm         = "SHA256"
   honor_force_authn        = false
   authn_context_class_ref  = "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
-  implicit_assignment = true
+  implicit_assignment      = true
 
   saml_signed_request_enabled = true
   single_logout_certificate = file("../auth0-is-new-idp/tf/kc-idp-cert.x5c")
 
-  //key_name = file("../auth0-is-new-idp/tf/kc-cert.x5c")
   authentication_policy = okta_app_signon_policy.only_1fa.id
 }
 
-output "okta-metadata-url" {
-  value = okta_app_saml.saml-app-current.metadata_url
-}
-
-resource "local_file" "okta-idp-metadata-app-cert" {
+resource "local_file" "okta-idp-metadata-kc-app-cert" {
   content  = okta_app_saml.saml-app-kc.certificate
   filename = "okta-idp-metadata-app-kc-cert.pem"
+}
+
+
+resource "okta_app_saml" "saml-app-kc-unsigned" {
+  label = "Unsigned Req SAML App for KC ${var.kc_url}"
+
+  sso_url              = "${var.kc_url}/realms/${var.kc_realm}/broker/${local.kc_okta_unsigned_broker_alias}/endpoint"
+  destination          = "${var.kc_url}/realms/${var.kc_realm}/broker/${local.kc_okta_unsigned_broker_alias}/endpoint"
+  recipient            = "${var.kc_url}/realms/${var.kc_realm}/broker/${local.kc_okta_unsigned_broker_alias}/endpoint"
+  audience             = "${var.kc_url}/realms/${var.kc_realm}/broker/${local.kc_okta_unsigned_broker_alias}/endpoint"
+
+  subject_name_id_template = "$${user.userName}"
+  subject_name_id_format   = "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
+  response_signed          = true
+  signature_algorithm      = "RSA_SHA256"
+  digest_algorithm         = "SHA256"
+  honor_force_authn        = false
+  authn_context_class_ref  = "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
+  implicit_assignment      = true
+
+  saml_signed_request_enabled = false
+
+  authentication_policy = okta_app_signon_policy.only_1fa.id
+}
+
+resource "local_file" "okta-idp-metadata-kc-unsigned-app-cert" {
+  content  = okta_app_saml.saml-app-kc-unsigned.certificate
+  filename = "okta-idp-metadata-app-kc-unsigned-cert.pem"
+}
+
+
+resource "local_file" "okta-idp-metadata-kc-unsigned-app" {
+  content  = okta_app_saml.saml-app-kc-unsigned.metadata
+  filename = "okta-idp-metadata-app-kc-unsigned.xml"
 }
 

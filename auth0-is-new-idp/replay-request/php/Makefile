@@ -1,4 +1,4 @@
 all: run
 
-run: index.php saml_replay.php
-	php -S localhost:8080 -t .
+run: index.php request-replay.php response-replay.php
+	php -S localhost:8080 index.php

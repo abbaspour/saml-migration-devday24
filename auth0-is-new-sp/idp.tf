@@ -198,3 +198,9 @@ resource "okta_app_saml" "saml-app-kc" {
 output "okta-metadata-url" {
   value = okta_app_saml.saml-app-current.metadata_url
 }
+
+resource "local_file" "okta-idp-metadata-app-cert" {
+  content  = okta_app_saml.saml-app-kc.certificate
+  filename = "okta-idp-metadata-app-kc-cert.pem"
+}
+

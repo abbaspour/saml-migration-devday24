@@ -69,30 +69,32 @@ resource "keycloak_saml_identity_provider" "auth0" {
 resource "keycloak_saml_identity_provider" "okta" {
   realm = data.keycloak_realm.master.id
 
-  //alias                      = "IdP-${var.okta_org_name}.${var.okta_base_url}"
-  alias                      = "okta"
-  entity_id                  = "http://localhost:8080/realms/master/broker/okta/endpoint"
+  alias     = local.kc_okta_broker_alias
+  # works for KeyCloak 25
+  entity_id = "${var.kc_url}/realms/${var.kc_realm}/broker/${local.kc_okta_broker_alias}/endpoint"
 
+  # TODO: not sure how to set idp entity_id here. it should be set to http://www.okta.com/${org_id}
   single_sign_on_service_url = okta_app_saml.saml-app-kc.http_post_binding
   single_logout_service_url = okta_app_saml.saml-app-kc.http_post_binding
-  //name_id_policy_format     = "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
 
-  post_binding_logout = true
-  post_binding_authn_request = true
+  login_hint                    = true
+  post_binding_logout           = true
+  post_binding_authn_request    = true
   name_id_policy_format         = "Unspecified"
   principal_type                = "SUBJECT"
+  authn_context_comparison_type = "exact"
 
   signing_certificate = file("okta-idp-cert.pem")
 
-  sync_mode                  = "IMPORT"
+  sync_mode             = "IMPORT"
   post_binding_response = true
 }
 
 resource "keycloak_openid_client" "jwt_io" {
   realm_id = data.keycloak_realm.master.id
 
-  client_id   = "jwt.io"
-  access_type = "PUBLIC"
+  client_id             = "jwt.io"
+  access_type           = "PUBLIC"
   implicit_flow_enabled = true
 
   valid_redirect_uris = [

@@ -166,34 +166,30 @@ resource "okta_app_signon_policy_rule" "only_1fa_rule" {
 }
 
 locals {
-  kc_broker_alias = "okta"
-  //kc_broker_alias = "IdP-amin.oktapreview.com"
+  kc_okta_broker_alias = "IdP-${var.okta_org_name}.${var.okta_base_url}"
 }
+
 resource "okta_app_saml" "saml-app-kc" {
   label = "SAML App for KC ${var.kc_url}"
-  //http://localhost:8080/realms/master/broker/IdP-amin.oktapreview.com/endpoint
 
-  /*  sso_url                  = "${var.kc_url}/realms/${var.kc_realm}/protocol/saml"
-    destination              = "${var.kc_url}/realms/${var.kc_realm}/protocol/saml"
-    recipient                = "${var.kc_url}/realms/${var.kc_realm}/protocol/saml"
-  */
+  sso_url              = "${var.kc_url}/realms/${var.kc_realm}/broker/${local.kc_okta_broker_alias}/endpoint"
+  destination          = "${var.kc_url}/realms/${var.kc_realm}/broker/${local.kc_okta_broker_alias}/endpoint"
+  recipient            = "${var.kc_url}/realms/${var.kc_realm}/broker/${local.kc_okta_broker_alias}/endpoint"
+  audience             = "${var.kc_url}/realms/${var.kc_realm}/broker/${local.kc_okta_broker_alias}/endpoint"
+  single_logout_issuer = "${var.kc_url}/realms/${var.kc_realm}/broker/${local.kc_okta_broker_alias}/endpoint"
+  single_logout_url    = "${var.kc_url}/realms/${var.kc_realm}/broker/${local.kc_okta_broker_alias}/endpoint"
 
-  sso_url     = "${var.kc_url}/realms/${var.kc_realm}/broker/${local.kc_broker_alias}/endpoint"
-  destination = "${var.kc_url}/realms/${var.kc_realm}/broker/${local.kc_broker_alias}/endpoint"
-  recipient   = "${var.kc_url}/realms/${var.kc_realm}/broker/${local.kc_broker_alias}/endpoint"
-
-  //audience                 = "${var.kc_url}/realms/${var.kc_realm}"
-  audience                 = "http://localhost:8080/realms/master/broker/okta/endpoint"
   subject_name_id_template = "$${user.userName}"
-  subject_name_id_format = "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
+  subject_name_id_format   = "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
   response_signed          = true
   signature_algorithm      = "RSA_SHA256"
   digest_algorithm         = "SHA256"
   honor_force_authn        = false
   authn_context_class_ref  = "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
   implicit_assignment = true
+
   //key_name = file("../auth0-is-new-idp/tf/kc-cert.x5c")
-  authentication_policy    = okta_app_signon_policy.only_1fa.id
+  authentication_policy = okta_app_signon_policy.only_1fa.id
 }
 
 output "okta-metadata-url" {

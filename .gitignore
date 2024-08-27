@@ -7,3 +7,5 @@ terraform.auto.tfvars
 terraform.tfstate*
 .terraform.tfstate*
 master.json
+*.xml
+*.json

@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 function isPostRequest() {
     return $_SERVER['REQUEST_METHOD'] === 'POST';

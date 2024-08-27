@@ -12,7 +12,7 @@ resource "auth0_tenant" "IdP" {
 resource "auth0_client" "idp" {
   provider = auth0.idp
 
-  name = "SAML IdP for ${var.okta_org_name}.${var.okta_base_url}"
+  name = "SAML IdP 1 for ${var.okta_org_name}.${var.okta_base_url}"
 
   callbacks = [
     #"https://${var.okta_org_name}.${var.okta_base_url}/sso/saml2/${okta_idp_saml.auth0.id}"  #cycle dependency
@@ -88,10 +88,6 @@ resource "auth0_client" "mimic-kc-idp" {
 locals {
    signingCert = replace(file("kc-idp-cert.pem"), "\n", "\\n")
    signingKey = replace(file("kc-idp-key.pem"), "\n", "\\n")
-}
-
-output "signingCert" {
-  value = local.signingCert
 }
 
 resource "auth0_action" "kc-saml-change-singing-key" {

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?><md:EntityDescriptor entityID="http://www.okta.com/exkgonjt0m9HAbrHX1d7" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"><md:IDPSSODescriptor WantAuthnRequestsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol"><md:KeyDescriptor use="signing"><ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:X509Data><ds:X509Certificate>MIIDmDCCAoCgAwIBAgIGAZFtphgkMA0GCSqGSIb3DQEBCwUAMIGMMQswCQYDVQQGEwJVUzETMBEG
+A1UECAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNU2FuIEZyYW5jaXNjbzENMAsGA1UECgwET2t0YTEU
+MBIGA1UECwwLU1NPUHJvdmlkZXIxDTALBgNVBAMMBGFtaW4xHDAaBgkqhkiG9w0BCQEWDWluZm9A
+b2t0YS5jb20wHhcNMjQwODIwMDIzNzA3WhcNMzQwODIwMDIzODA3WjCBjDELMAkGA1UEBhMCVVMx
+EzARBgNVBAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xDTALBgNVBAoMBE9r
+dGExFDASBgNVBAsMC1NTT1Byb3ZpZGVyMQ0wCwYDVQQDDARhbWluMRwwGgYJKoZIhvcNAQkBFg1p
+bmZvQG9rdGEuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAg6HwUEggOC7b2k8Q
+mAq0+2e6MKCuvSMnni4cCJUg9B5fvY8uhlKvxEA2oloAP3hUFTB6kApq/ChARyWHYPOEAssWR3tQ
+jMZRv837yfketsus9M7c/kECfdAexQDbCcjJ3ABOQN/5SPMWbZ8JjdHVbOe+vMNgKHnaVqWn7NWd
+eAIWSZAZ4dd9vx299ac4XivH8ytnUNEbdF8tas2BCG+YdkgeKb/EqrgQZVXuOgF/Adrar3KxHZm5
+3xDttW1HWRGQMs9wtndI2ptzgKnEJms86UQ4RDLHFtzlAHNyLg0nhkS2J+XfFRb405HmAiFemAF1
+ljsNYYOKMaE08mLABHuIUwIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQB9eIBJKLek/jb/zjZKnZXK
+T/AUVTELjzBR+jfIzfOUT7rqvN2COO+MH/gKruVh8xK9c2+TPhVLCR6+R6UKbezBsII9jzbbVPxi
+Xf6n7UAuKlJe47FqhyF9Y+30l/ClxhtM1oy1LIg7V+grBAKEuwbH8FvA3LZ1gAv60yago4IrJ4zj
+fO9JIN3dKE3D3go7YPzKH+BDCxlZL+Q4tHpmJ6tGGKPkmOf4FCG7Afq6NGYh4b1gVCCrgmbIbAQq
+mt9FEsN7s/p5ICZdZCvbBYqnS/Jul9FIGG/SWUCeGgkMML1g+xvVnqwtmWxBvxYuVT19eEY+7K0N
+5FftmT64xFrTPUZ1</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor><md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat><md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://amin.oktapreview.com/app/amin_samlapp2foraminsamlsp_1/exkgonjt0m9HAbrHX1d7/sso/saml"/><md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://amin.oktapreview.com/app/amin_samlapp2foraminsamlsp_1/exkgonjt0m9HAbrHX1d7/sso/saml"/></md:IDPSSODescriptor></md:EntityDescriptor>

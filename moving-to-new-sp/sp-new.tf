@@ -133,8 +133,8 @@ resource "auth0_connection" "mimic-kc-sp-for-okta-idp-signed-req" {
 
 
     signing_key {
-      cert = file("../auth0-is-new-idp/tf/kc-idp-cert.pem")
-      key  = file("../auth0-is-new-idp/tf/kc-idp-key.pem")
+      cert = file("../auth0-is-new-idp/kc-idp-cert.pem")
+      key  = file("../auth0-is-new-idp/kc-idp-key.pem")
     }
 
     signing_cert = local_file.okta-idp-metadata-kc-app-cert.content

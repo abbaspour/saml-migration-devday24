@@ -129,6 +129,7 @@ resource "auth0_connection_clients" "KC-SAML-app-assignment" {
 }
 
 ### mimic KC
+/*
 resource "auth0_connection" "mimic-kc-saml" {
   provider = auth0.sp
 
@@ -168,10 +169,6 @@ EOL
   }
 }
 
-output "mimic-kc-sign_in_url" {
-  value = "https://${var.auth0_idp_domain}/samlp/${auth0_client.mimic-kc-idp.client_id}"
-}
-
 resource "auth0_connection_clients" "mimic-KC-SAML-app-assignment" {
   provider = auth0.sp
 
@@ -181,3 +178,9 @@ resource "auth0_connection_clients" "mimic-KC-SAML-app-assignment" {
     var.auth0_sp_tf_client_id
   ]
 }
+
+output "mimic-kc-sign_in_url" {
+  value = "https://${var.auth0_idp_domain}/samlp/${auth0_client.mimic-kc-idp.client_id}"
+}
+*/
+

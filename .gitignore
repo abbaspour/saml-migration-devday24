@@ -9,4 +9,6 @@ terraform.tfstate*
 master.json
 *.xml
 *.json
+*.pdf
+slides.sh
 demo.md

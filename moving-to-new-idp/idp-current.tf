@@ -1,3 +1,5 @@
+## Okta
+
 resource "okta_app_signon_policy" "only_1fa" {
   name        = "1FA policy for apps moving idp"
   description = "Authentication Policy to be used simple apps."
@@ -44,6 +46,22 @@ output "okta-metadata-url" {
   value = okta_app_saml.saml-app-current.metadata_url
 }
 
+# need this for /login/signout?fromURI={{one of the trusted origins}}
+resource "okta_trusted_origin" "jwt-io" {
+  name   = "jwt.io"
+  origin = "https://jwt.io"
+  scopes = ["REDIRECT"]
+}
+
+resource "okta_user" "sample_user" {
+  email      = var.sample_user_email
+  first_name = "Amin"
+  last_name  = "Abbaspour"
+  login      = var.sample_user_email
+  password = var.sample_user_password
+}
+
+## Keycloak
 data "keycloak_realm" "master" {
   realm = "master"
 }
@@ -64,17 +82,3 @@ resource "keycloak_saml_client" "auth0_saml_client" {
   client_signature_required = false
 }
 
-# need this for /login/signout?fromURI={{one of the trusted origins}}
-resource "okta_trusted_origin" "jwt-io" {
-  name   = "jwt.io"
-  origin = "https://jwt.io"
-  scopes = ["REDIRECT"]
-}
-
-resource "okta_user" "sample_user" {
-  email      = var.sample_user_email
-  first_name = "Amin"
-  last_name  = "Abbaspour"
-  login      = var.sample_user_email
-  password = var.sample_user_password
-}

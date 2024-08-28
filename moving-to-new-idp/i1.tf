@@ -1,3 +1,5 @@
+# Solution i1: Turn the current IdP into an SP Proxy
+
 data "http" "auth0-jwks" {
   url = "https://${var.auth0_idp_domain}/.well-known/jwks.json"
 }
@@ -35,7 +37,7 @@ output "okta-auth0-idp-id" {
   value = okta_idp_saml.auth0.id
 }
 
-
+/*
 // NOTE: do NOT remove
 resource "okta_policy_rule_idp_discovery" "auth0-saml-idp-routing" {
   policy_id                  = data.okta_policy.idp_discovery_policy.id
@@ -51,6 +53,4 @@ resource "okta_policy_rule_idp_discovery" "auth0-saml-idp-routing" {
     type = "APP"
   }
 }
-
-
-
+*/

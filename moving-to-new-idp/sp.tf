@@ -104,6 +104,9 @@ resource "auth0_client" "jwt-io" {
   }
 }
 
+output "auth0-sp-client_id" {
+  value = auth0_client.jwt-io.client_id
+}
 
 resource "auth0_connection_clients" "Okta-SAML-app-assignment" {
   provider = auth0.sp

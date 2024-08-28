@@ -1,3 +1,24 @@
+resource "okta_app_signon_policy" "only_1fa" {
+  name        = "1FA policy for apps moving idp"
+  description = "Authentication Policy to be used simple apps."
+}
+
+resource "okta_app_signon_policy_rule" "only_1fa_rule" {
+  policy_id                   = okta_app_signon_policy.only_1fa.id
+  name                        = "Password only for auth moving idp"
+  factor_mode                 = "1FA"
+  re_authentication_frequency = "PT43800H"
+  status                      = "ACTIVE"
+  constraints = [
+    jsonencode({
+      "knowledge" : {
+        "required" : false
+        "types" : ["password"]
+      }
+    })
+  ]
+}
+
 resource "okta_app_saml" "saml-app-current" {
   label                    = "SAML App for ${var.auth0_sp_tenant_name}"
   sso_url                  = "https://${var.auth0_sp_domain}/login/callback"
@@ -12,68 +33,16 @@ resource "okta_app_saml" "saml-app-current" {
   honor_force_authn        = false
   authn_context_class_ref  = "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
   implicit_assignment        = true
+
+  authentication_policy = okta_app_signon_policy.only_1fa.id
 }
 
+output "okta-saml-app-id" {
+  value = okta_app_saml.saml-app-current.id
+}
 output "okta-metadata-url" {
   value = okta_app_saml.saml-app-current.metadata_url
 }
-
-# Solution i1: Current IdP is going to act like a SP
-data "http" "auth0-jwks" {
-  url = "https://${var.auth0_idp_domain}/.well-known/jwks.json"
-}
-
-data "jq_query" "extract-first-x5c-from-jwks" {
-  data  = data.http.auth0-jwks.response_body
-  query = ".keys[0].x5c[0]"
-}
-
-
-resource "okta_idp_saml_key" "auth0-signing-key" {
-  x5c = [data.jq_query.extract-first-x5c-from-jwks.result]
-}
-
-resource "okta_idp_saml" "auth0" {
-  name                     = "IdP 1 ${var.auth0_idp_domain}"
-  acs_type                 = "INSTANCE"
-  sso_url                  = "https://${var.auth0_idp_domain}/samlp/${auth0_client.idp.client_id}"
-  sso_destination          = "https://${var.auth0_idp_domain}"
-  sso_binding              = "HTTP-POST"
-  username_template        = "idpuser.subjectNameId"
-  kid                      = okta_idp_saml_key.auth0-signing-key.kid
-  issuer                   = "urn:${var.auth0_idp_domain}"
-  request_signature_scope  = "REQUEST"
-  response_signature_scope = "ANY"
-}
-
-// All Okta org(s) contain only one IdP Discovery Policy
-data "okta_policy" "idp_discovery_policy" {
-  name = "Idp Discovery Policy"
-  type = "IDP_DISCOVERY"
-}
-
-output "okta-auth0-idp-id" {
-  value = okta_idp_saml.auth0.id
-}
-
-/*
-// NOTE: do NOT remove
-resource "okta_policy_rule_idp_discovery" "auth0-saml-idp-routing" {
-  policy_id                  = data.okta_policy.idp_discovery_policy.id
-  name                      = "Send all traffic to IdP ${var.auth0_idp_domain}"
-  idp_id                    = okta_idp_saml.auth0.id
-  idp_type                  = "Saml2"
-  network_connection        = "ANYWHERE"
-  priority                  = 1
-  status                    = "ACTIVE"
-
-  app_include {
-    id   = okta_app_saml.saml-app-current.id
-    type = "APP"
-  }
-}
-*/
-
 
 data "keycloak_realm" "master" {
   realm = "master"
@@ -93,4 +62,19 @@ resource "keycloak_saml_client" "auth0_saml_client" {
   include_authn_statement = true
 
   client_signature_required = false
+}
+
+# need this for /login/signout?fromURI={{one of the trusted origins}}
+resource "okta_trusted_origin" "jwt-io" {
+  name   = "jwt.io"
+  origin = "https://jwt.io"
+  scopes = ["REDIRECT"]
+}
+
+resource "okta_user" "sample_user" {
+  email      = var.sample_user_email
+  first_name = "Amin"
+  last_name  = "Abbaspour"
+  login      = var.sample_user_email
+  password = var.sample_user_password
 }

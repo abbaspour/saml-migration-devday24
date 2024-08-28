@@ -56,9 +56,9 @@ resource "auth0_user" "user1" {
   provider = auth0.idp
 
   connection_name = local.default-db-name
-  email           = "amin@atko.email"
-  password        = "amin@atko.email"
+  email           = var.sample_user_email
   given_name      = "Amin"
+  password        = var.sample_user_password
   family_name     = "Abbaspour"
 }
 

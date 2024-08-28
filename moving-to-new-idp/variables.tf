@@ -73,3 +73,15 @@ variable "kc_tf_client_secret" {
   sensitive = true
 }
 
+## sample user
+variable "sample_user_email" {
+  type = string
+  description = "sample user email"
+}
+
+variable "sample_user_password" {
+  type = string
+  description = "sample user password"
+  sensitive = true
+}
+

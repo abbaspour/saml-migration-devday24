@@ -1,24 +1,5 @@
-resource "okta_app_saml" "saml-app-current" {
-  label                    = "SAML App for ${var.auth0_sp_tenant_name}"
-  sso_url                  = "https://${var.auth0_sp_domain}/login/callback"
-  recipient                = "https://${var.auth0_sp_domain}/login/callback"
-  destination              = "https://${var.auth0_sp_domain}/login/callback"
-  audience                 = "urn:auth0:${var.auth0_sp_tenant_name}:${local.saml_connection_name}"
-  subject_name_id_template = "$${user.userName}"
-  subject_name_id_format   = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-  response_signed          = true
-  signature_algorithm      = "RSA_SHA256"
-  digest_algorithm         = "SHA256"
-  honor_force_authn        = false
-  authn_context_class_ref  = "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
-  implicit_assignment        = true
-}
+# Solution i1: Turn the current IdP into an SP Proxy
 
-output "okta-metadata-url" {
-  value = okta_app_saml.saml-app-current.metadata_url
-}
-
-# Solution i1: Current IdP is going to act like a SP
 data "http" "auth0-jwks" {
   url = "https://${var.auth0_idp_domain}/.well-known/jwks.json"
 }
@@ -73,24 +54,3 @@ resource "okta_policy_rule_idp_discovery" "auth0-saml-idp-routing" {
   }
 }
 */
-
-
-data "keycloak_realm" "master" {
-  realm = "master"
-}
-
-resource "keycloak_saml_client" "auth0_saml_client" {
-  realm_id  = data.keycloak_realm.master.id
-  client_id = "urn:auth0:${var.auth0_sp_tenant_name}:${local.kc_saml_connection_name}"
-  name      = "auth0-saml-client"
-
-  valid_redirect_uris = [
-    "https://${var.auth0_sp_domain}/login/callback"
-  ]
-
-  sign_documents          = false
-  sign_assertions         = true
-  include_authn_statement = true
-
-  client_signature_required = false
-}

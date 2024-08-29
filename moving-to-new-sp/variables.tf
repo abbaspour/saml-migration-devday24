@@ -79,3 +79,15 @@ variable "kc_realm" {
   default     = "master"
 }
 
+## sample user
+variable "sample_user_email" {
+  type = string
+  description = "sample user email"
+}
+
+variable "sample_user_password" {
+  type = string
+  description = "sample user password"
+  sensitive = true
+}
+

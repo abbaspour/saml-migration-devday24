@@ -7,29 +7,6 @@ resource "auth0_tenant" "IdP" {
   }
 }
 
-data "local_file" "cert_pem_file" {
-  filename = "../ca/auth0-is-new-sp-cert.pem"
-}
-
-data "local_file" "key_pem_file" {
-  filename = "../ca/auth0-is-new-sp-private.pem"
-}
-
-resource "null_resource" "cert_strip_pem" {
-  provisioner "local-exec" {
-    command = <<EOT
-      cat ${data.local_file.cert_pem_file.filename} | \
-      awk 'NR>1 && !/^-----END/ {printf "%s", $0}' > /tmp/auth0-is-new-sp-cert.x5c
-    EOT
-  }
-}
-
-data "local_file" "cert_x5c" {
-  depends_on = [null_resource.cert_strip_pem]
-  filename = "/tmp/auth0-is-new-sp-cert.x5c"
-}
-
-
 resource "auth0_client" "idp" {
   provider = auth0.idp
 
@@ -78,15 +55,49 @@ resource "auth0_connection_clients" "enable-idp-app-for-default-db" {
     auth0_client.idp-for-kc.client_id
   ]
 }
+
 resource "auth0_user" "user1" {
   provider = auth0.idp
 
   connection_name = local.db-name
-  email           = "amin@atko.email"
-  password        = "amin@atko.email"
+  email           = var.sample_user_email
+  password        = var.sample_user_password
   given_name      = "Amin"
   family_name     = "Abbaspour"
 }
+
+locals {
+  cert-name = "auth0-is-new-sp"
+}
+
+# in ca/ folder run /self-sign.sh -n ${cert-name} to generate these files
+
+data "local_file" "cert_pem_file" {
+  filename = "../ca/${local.cert-name}-cert.pem"
+}
+
+data "local_file" "key_pem_file" {
+  filename = "../ca/${local.cert-name}-private.pem"
+}
+
+data "local_file" "cert_x5c_file" {
+  filename = "../ca/${local.cert-name}-cert.x5c"
+}
+
+/*resource "null_resource" "cert_strip_pem" {
+  provisioner "local-exec" {
+    command = <<EOT
+      cat ${data.local_file.cert_pem_file.filename} | \
+      awk 'NR>1 && !/^-----END/ {printf "%s", $0}' > /tmp/auth0-is-new-sp-cert.x5c
+    EOT
+  }
+}
+
+data "local_file" "cert_x5c" {
+  depends_on = [null_resource.cert_strip_pem]
+  filename = "/tmp/auth0-is-new-sp-cert.x5c"
+}
+*/
 
 locals {
   signingCert = replace(data.local_file.cert_pem_file.content, "\n", "\\n")
@@ -191,7 +202,7 @@ resource "okta_app_saml" "saml-app-kc" {
   implicit_assignment      = true
 
   saml_signed_request_enabled = true
-  single_logout_certificate = file("../auth0-is-new-idp/kc-idp-cert.x5c")
+  single_logout_certificate = file("../moving-to-new-idp/kc-idp-cert.x5c")
 
   authentication_policy = okta_app_signon_policy.only_1fa.id
 }

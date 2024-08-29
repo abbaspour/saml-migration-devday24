@@ -9,6 +9,7 @@
 set -eo pipefail
 
 command -v openssl >/dev/null || { echo >&2 "error: openssl not found";  exit 3; }
+command -v awk >/dev/null || { echo >&2 "error: awk not found";  exit 3; }
 
 function usage() {
     cat <<END >&2
@@ -24,12 +25,11 @@ END
 }
 
 declare pair_name='localhost'
-declare opt_verbose=0
 
 while getopts "n:hv?" opt; do
     case ${opt} in
     n) pair_name=${OPTARG} ;;
-    v) opt_verbose=1 ;; #set -x;;
+    v) set -x;;
     h | ?) usage 0 ;;
     *) usage 1 ;;
     esac
@@ -38,9 +38,12 @@ done
 [[ -z "${pair_name}" ]] && { echo >&2 "ERROR: pair_name undefined.";  usage 1; }
 
 
-declare -r private_key="${pair_name}-private.pem"
-declare -r cert_key="${pair_name}-cert.pem"
-declare -r public_key="${pair_name}-public.pem"
+declare -r private_pem="${pair_name}-private.pem"
+declare -r private_x5c="${pair_name}-private.x5c"
+declare -r cert_pem="${pair_name}-cert.pem"
+declare -r cert_x5c="${pair_name}-cert.x5c"
+declare -r public_pem="${pair_name}-public.pem"
+declare -r public_x5c="${pair_name}-public.x5c"
 
 cat >openssl.cnf <<-EOF
   [req]
@@ -55,7 +58,12 @@ cat >openssl.cnf <<-EOF
   extendedKeyUsage = serverAuth
 EOF
 
-openssl req -nodes -new -x509 -config openssl.cnf -days 365 -keyout "${private_key}" -out "${cert_key}"
-openssl x509 -inform PEM -in ${cert_key} -pubkey -noout >"${public_key}"
+openssl req -nodes -new -x509 -config openssl.cnf -days 365 -keyout "${private_pem}" -out "${cert_pem}"
+openssl x509 -inform PEM -in "${cert_pem}" -pubkey -noout >"${public_pem}"
+
+awk 'NR>1 && !/^-----END/ {printf "%s", $0}' "${private_pem}" > "${private_x5c}"
+awk 'NR>1 && !/^-----END/ {printf "%s", $0}' "${cert_pem}" > "${cert_x5c}"
+awk 'NR>1 && !/^-----END/ {printf "%s", $0}' "${public_pem}" > "${public_x5c}"
 
 rm openssl.cnf
+

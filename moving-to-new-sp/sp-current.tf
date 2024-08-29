@@ -10,7 +10,8 @@ resource "auth0_tenant" "SP" {
 }
 
 resource "okta_idp_saml_key" "auth0-signing-key" {
-  x5c = [data.local_file.cert_x5c.content]
+  x5c = [data.local_file.cert_x5c_file.content]
+
 }
 
 resource "okta_idp_saml" "auth0" {

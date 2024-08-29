@@ -1,0 +1,99 @@
+# todo: update
+digraph decisionTree {
+    bgcolor=transparent
+    graph [rankdir=TB]
+    node [shape=diamond]
+
+    // top
+    "Role Auth0 will play?" -> "Can turn current SP\n to IdP proxy?" [label=SP]
+    "Role Auth0 will play?" -> "Can turn current IdP\n to SP proxy?" [label=IdP]
+
+    // SP
+    s1 [label="S1: Create Connection in Auth0\n pointing to current SP as upstream IdP", shape=box]
+
+    "Can turn current SP\n to IdP proxy?" -> "IdP support ACS\n in signed req?" [label=No, color=red]
+
+    s1a [label="For new apps, use Auth0 as IdP", shape=box]
+    "Can turn current SP\n to IdP proxy?" -> s1 [label=Yes, color=green]
+    s1 -> s1a
+
+    "IdP support ACS\n in signed req?" -> "Access to current\n req signing private key?" [label=Yes]
+
+    s4 [label="S4: Upload signig keys, change entityId", shape=box]
+    "Access to current\n req signing private key?" -> s4 [label=Yes, color=green]
+
+    s4 -> "SAML Fed Type?"
+
+    s3 [label="S3: send new ACS in SAML Request payload", shape=box]
+    "SAML Fed Type?" -> s3 [label="SP-initiated"]
+
+    idp_init[label="in IdP and change ACS to new location\n if IdP supports, use ACSIdx param", shape=box]
+    "SAML Fed Type?" -> idp_init [label="IdP-initiated"]
+
+    "IdP support ACS\n in signed req?" -> "Can add new \nACS/signing cert\n in IdPs?" [label=No, color=red]
+
+    s5 [label="S5: change entityId, \ndownload signing pub, \nin IdP and add new ACS to allowed list", shape=box]
+    "Can add new \nACS/signing cert\n in IdPs?" -> s5 [label=Yes, color=green]
+
+    s5 -> "SAML Fed Type?"
+
+    "Can add new \nACS/signing cert\n in IdPs?" -> "Can deploy replay endpoint\n in current ACS location?" [label=No, color=red]
+
+    s6 [label="S6: Deploy SP replay endpoint, configure to perform checks\nIn Auth0 connection, disable dst/rsp check", shape=box]
+    "Can deploy replay endpoint\n in current ACS location?" -> s6 [label=Yes, color=green]
+
+    "Can deploy replay endpoint\n in current ACS location?" -> "Can add Auth0\n as new SP in \n current IdP?" [label=No, color=red]
+
+    s2 [label="S2: Create new connection with IdP metadata URL", shape=box]
+
+    "Can add Auth0\n as new SP in \n current IdP?" -> s2 [label=Yes, color=green]
+
+    not_possible [label="Migration not possible", shape=box, fillcolor=gray]
+
+    "Can add Auth0\n as new SP in \n current IdP?" -> not_possible [label=No, color=red]
+
+
+    // IdP
+    i1 [label="I1: Create IdP App in Auth0 \n point current SP as upstream IdP", shape=box]
+    "Can turn current IdP\n to SP proxy?" -> i1 [label=Yes, color=green]
+
+    "Can turn current IdP\n to SP proxy?" -> "Can change \n SignOn URL in SPs?" [label=No, color=red]
+
+    change_urls [label="Point SPs to Auth0 signon URL", shape=box]
+
+    "Can change \n SignOn URL in SPs?" -> change_urls [label=Yes, color=green]
+
+    "Can change \n SignOn URL in SPs?" -> "Can deploy a \n req replay endpoint\n in current signon url?" [label=No, color=red]
+
+    "Can deploy a \n req replay endpoint\n in current signon url?" -> not_possible [label=No, color=red]
+
+    "Can deploy a \n req replay endpoint\n in current signon url?" -> "Reqs with POST binding" [label=Yes, color=green]
+
+    i3ss [label="I3: Deploy server-side\n replay endpoint", shape=box]
+    i3cs [label="I3: Deploy client-side\n replay endpoint", shape=box]
+
+    "Reqs with POST binding" -> i3ss [label=Yes]
+    "Reqs with POST binding" -> i3cs [label=No]
+
+    change_urls -> "Access to current\n response signing key?"
+    i3ss -> "Access to current\n response signing key?"
+    i3cs -> "Access to current\n response signing key?"
+
+    i2 [label="I2: Upload signig keys to Auth0", shape=box]
+
+    "Access to current\n response signing key?" -> i2 [label=Yes, color=green]
+
+    "Access to current\n response signing key?" -> "Can upload \n new signing cert to SPs?" [label=No, color=red]
+
+
+    "Can upload \n new signing cert to SPs?" -> not_possible [label=No, color=red]
+
+    update_sp_certs [label="Update SPs with new IdP metadata cert", shape=box]
+    "Can upload \n new signing cert to SPs?" -> update_sp_certs [label=Yes, color=green]
+
+    i4 [label="I4: Upload client signing cert to Auth0", shape=box]
+    i2 -> i4
+    update_sp_certs -> i4
+
+
+}

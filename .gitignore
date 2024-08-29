@@ -4,6 +4,7 @@ terraform.auto.tfvars
 .terraform.lock.hcl
 *.plan
 *.pem
+*.x5c
 terraform.tfstate*
 .terraform.tfstate*
 master.json

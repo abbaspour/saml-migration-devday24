@@ -1,19 +1,3 @@
----
-title: "SAML Migration"
-author: "Amin Abbaspour"
-institute: "Okta"
-topic: "Developer Day 2024"
-date: 26 Sep 2024
-theme: "Frankfurt"
-fontsize: 11pt
-urlcolor: red
-linkstyle: bold
-aspectratio: 169
-logo: "./img/title-background.jpg"
-section-titles: false
-toc: false
----
-
 # Our assumptions in this talk
 
 - You’re coming in with SAML knowledge
@@ -21,6 +5,7 @@ toc: false
 - Generic and vendor-agnostic using features that most vendors support
 - We’ll see 3 solutions for moving IdP and 3 for moving SP
 
+Talk demo video: https://developerday.com/events/devday24/sessions/saml-migration 
 
 --- 
 
